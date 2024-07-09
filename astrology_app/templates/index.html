@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astrology Report</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Astrological Report</h1>
+        <form id="astroForm">
+            <div class="form-group">
+                <label for="birthDate">Birth Date:</label>
+                <input type="date" class="form-control" id="birthDate" required>
+            </div>
+            <div class="form-group">
+                <label for="birthTime">Birth Time:</label>
+                <input type="time" class="form-control" id="birthTime" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" class="form-control" id="location" placeholder="City, Country" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Report</button>
+        </form>
+        <div id="reportSection" class="mt-5" style="display: none;">
+            <h2>Your Astrological Report</h2>
+            <div id="astroReport"></div>
+            <button id="openChat" class="btn btn-secondary mt-3">Ask Questions</button>
+        </div>
+    </div>
+
+    <div id="chatModal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chat with Astrology Bot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatBox"></div>
+                    <input type="text" id="userMessage" class="form-control" placeholder="Ask a question...">
+                </div>
+                <div class="modal-footer">
+                    <button id="sendMessage" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#astroForm').on('submit', function (event) {
+                event.preventDefault();
+
+                let birthDate = $('#birthDate').val();
+                let birthTime = $('#birthTime').val();
+                let location = $('#location').val();
+
+                // Format the data as required
+                let formattedData = {
+                    birth_date: birthDate,
+                    birth_time: birthTime,
+                    location: location
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/report',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formattedData),
+                    success: function (data) {
+                        $('#astroReport').html(formatReport(data));
+                        $('#reportSection').show();
+                    },
+                    error: function (error) {
+                        console.log('Error:', error);
+                    }
+                });
+            });
+
+            function formatReport(report) {
+                let reportHtml = '';
+                for (let key in report) {
+                    if (report.hasOwnProperty(key)) {
+                        reportHtml += '<strong>' + key + ':</strong> ' + JSON.stringify(report[key], null, 2) + '<br>';
+                    }
+                }
+                return reportHtml;
+            }
+        });
+    </script>
+</body>
+</html>

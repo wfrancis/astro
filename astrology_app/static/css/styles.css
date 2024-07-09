@@ -1,0 +1,21 @@
+body {
+    background-color: #f8f9fa;
+}
+#astroForm {
+    margin-top: 50px;
+}
+#reportSection {
+    margin-top: 50px;
+}
+.modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.user-message {
+    text-align: right;
+    margin: 10px 0;
+}
+.bot-message {
+    text-align: left;
+    margin: 10px 0;
+}
