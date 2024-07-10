@@ -21,7 +21,7 @@
             </div>
             <div class="form-group">
                 <label for="location">Location:</label>
-                <input type="text" class="form-control" id="location" placeholder="City, Country" required>
+                <input type="text" class="form-control" id="location" placeholder="City, State" required>
             </div>
             <button type="submit" class="btn btn-primary">Generate Report</button>
         </form>
@@ -91,9 +91,6 @@
             function formatReport(report) {
                 console.log('Formatting report:', report); // Debugging statement
                 return `
-                    <p><strong>Birth Date:</strong> ${report.birth_date}</p>
-                    <p><strong>Birth Time:</strong> ${report.birth_time}</p>
-                    <p><strong>Location:</strong> ${report.location}</p>
                     <p><strong>Ascendant:</strong> ${report.Ascendant}</p>
                     <p><strong>Aspects:</strong> ${report.Aspects.length ? report.Aspects.join(', ') : 'None listed'}</p>
                     <p><strong>Current Vimshottari Dasha:</strong> ${report['Current Vimshottari Dasha']}</p>
