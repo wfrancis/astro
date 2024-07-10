@@ -99,7 +99,7 @@ except ValueError as e:
     print(e)
 
 
-def generate_astrology_report(birth_date, birth_time, location):
+def generate_astrology_report(first_name, last_name, birth_date, birth_time, location):
     year, month, day = map(int, birth_date.split('-'))
     hour, minute = map(int, birth_time.split(':'))
 
@@ -135,6 +135,8 @@ def generate_astrology_report(birth_date, birth_time, location):
     current_dasha = calculate_vimshottari_dasha(julian_day, birth_julian_day)
 
     report = {
+        'First Name': first_name,
+        'Last Name': last_name,
         'Planetary Positions': planet_rasis,
         'House Positions': house_rasis,
         'Ascendant': get_rasi(ascendant),
@@ -147,11 +149,13 @@ def generate_astrology_report(birth_date, birth_time, location):
 
 if __name__ == '__main__':
     # Generate the report with provided details
+    first_name = "Billy"
+    last_name = "Bob"
     birth_date = "1982-02-22"
     birth_time = "03:00"
     location = "Voorhees, New Jersey"
 
-    report = generate_astrology_report(birth_date, birth_time, location)
+    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location)
     report_str = "\n".join([f"{key}: {value}" for key, value in report.items()])
 
     print("Generated Astrology Report:")

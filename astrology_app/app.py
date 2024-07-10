@@ -13,12 +13,14 @@ def index():
 def report():
     data = request.json
     print(f"Received data: {data}")
+    first_name = data['first_name']
+    last_name = data['last_name']
     birth_date = data['birth_date']
     birth_time = data['birth_time']
     location = data['location']
 
     # Generate the astrology report
-    report = generate_astrology_report(birth_date, birth_time, location)
+    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location)
     print(f"Generated report: {report}")
 
     # Return the report as JSON

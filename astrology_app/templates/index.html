@@ -12,6 +12,14 @@
         <h1 class="mt-5">Astrological Report</h1>
         <form id="astroForm">
             <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" class="form-control" id="firstName" placeholder="First Name" required>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" class="form-control" id="lastName" placeholder="Last Name" required>
+            </div>
+            <div class="form-group">
                 <label for="birthDate">Birth Date:</label>
                 <input type="date" class="form-control" id="birthDate" required>
             </div>
@@ -26,7 +34,6 @@
             <button type="submit" class="btn btn-primary">Generate Report</button>
         </form>
         <div id="reportSection" class="mt-5" style="display: none;">
-            <h2>Your Astrological Report</h2>
             <div id="astroReport"></div>
 <!--            <button id="openChat" class="btn btn-secondary mt-3">Ask Questions</button>-->
         </div>
@@ -61,12 +68,16 @@
             $('#astroForm').on('submit', function (event) {
                 event.preventDefault();
 
+                let firstName = $('#firstName').val();
+                let lastName = $('#lastName').val();
                 let birthDate = $('#birthDate').val();
                 let birthTime = $('#birthTime').val();
                 let location = $('#location').val();
 
                 // Format the data as required
                 let formattedData = {
+                    first_name: firstName,
+                    last_name: lastName,
                     birth_date: birthDate,
                     birth_time: birthTime,
                     location: location
@@ -91,6 +102,8 @@
             function formatReport(report) {
                 console.log('Formatting report:', report); // Debugging statement
                 return `
+                    <h2>Astrological Report for ${report['First Name']} ${report['Last Name']}</h2>
+<!--                    <p><strong>Name:</strong> ${report['First Name']} ${report['Last Name']} </p>-->
                     <p><strong>Ascendant:</strong> ${report.Ascendant}</p>
                     <p><strong>Aspects:</strong> ${report.Aspects.length ? report.Aspects.join(', ') : 'None listed'}</p>
                     <p><strong>Current Vimshottari Dasha:</strong> ${report['Current Vimshottari Dasha']}</p>
