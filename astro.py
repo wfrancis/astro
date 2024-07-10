@@ -1,22 +1,31 @@
 import swisseph as swe
 import datetime
+
+from geopy import Photon
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from geopy.geocoders.geocodefarm import GeocodeFarm
+
 
 def get_julian_day(year, month, day, hour=0, minute=0):
     return swe.julday(year, month, day, hour + minute / 60.0)
 
+
 def get_planet_position(julian_day, planet):
     position, ret = swe.calc_ut(julian_day, planet)
     return position[0]
+
 
 def get_rasi(position):
     signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
              'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
     return signs[int(position // 30)]
 
+
 def get_house_positions(julian_day, latitude, longitude):
     houses, ascmc = swe.houses(julian_day, latitude, longitude, b'P')
     return houses, ascmc[0]
+
 
 def get_aspects(planet_positions):
     aspects = []
@@ -30,6 +39,7 @@ def get_aspects(planet_positions):
                 aspects.append((planet1, planet2, angle))
     return aspects
 
+
 def identify_yogas(planet_positions, house_positions):
     yogas = []
     if 'Jupiter' in planet_positions and 'Moon' in planet_positions:
@@ -38,6 +48,7 @@ def identify_yogas(planet_positions, house_positions):
         if any(abs(jupiter_pos - moon_pos) % 90 <= 10 for i in range(4)):
             yogas.append("Gaja Kesari Yoga: Jupiter and Moon are in a Kendra (quadrant) from each other.")
     return yogas
+
 
 def calculate_vimshottari_dasha(julian_day, birth_julian_day):
     dasha_periods = {
@@ -58,10 +69,35 @@ def calculate_vimshottari_dasha(julian_day, birth_julian_day):
             break
     return current_dasha
 
+
 def get_lat_lon(location):
-    geolocator = Nominatim(user_agent="astro_report")
-    location = geolocator.geocode(location)
-    return location.latitude, location.longitude
+    geolocators = [
+        ("Nominatim", Nominatim(user_agent="astro_report")),
+        ("Photon", Photon(user_agent="astro_report")),
+        ("GeocodeFarm", GeocodeFarm(user_agent="astro_report"))
+    ]
+
+    for service_name, geolocator in geolocators:
+        try:
+            loc = geolocator.geocode(location, timeout=10)
+            if loc:
+                print(f"Location found using {service_name}: {loc.latitude}, {loc.longitude}")
+                return loc.latitude, loc.longitude
+            else:
+                print(f"Location '{location}' not found using {service_name}")
+        except (GeocoderTimedOut, GeocoderServiceError, ValueError) as e:
+            print(f"{service_name} failed: {e}")
+
+    raise ValueError("All geocoding services failed")
+
+
+# Example usage
+try:
+    lat, lon = get_lat_lon("New York, USA")
+    print(f"Latitude: {lat}, Longitude: {lon}")
+except ValueError as e:
+    print(e)
+
 
 def generate_astrology_report(birth_date, birth_time, location):
     year, month, day = map(int, birth_date.split('-'))

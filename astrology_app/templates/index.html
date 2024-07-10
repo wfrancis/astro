@@ -78,6 +78,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify(formattedData),
                     success: function (data) {
+                        console.log('Data received:', data); // Debugging statement
                         $('#astroReport').html(formatReport(data));
                         $('#reportSection').show();
                     },
@@ -88,13 +89,24 @@
             });
 
             function formatReport(report) {
-                let reportHtml = '';
-                for (let key in report) {
-                    if (report.hasOwnProperty(key)) {
-                        reportHtml += '<strong>' + key + ':</strong> ' + JSON.stringify(report[key], null, 2) + '<br>';
-                    }
-                }
-                return reportHtml;
+                console.log('Formatting report:', report); // Debugging statement
+                return `
+                    <p><strong>Birth Date:</strong> ${report.birth_date}</p>
+                    <p><strong>Birth Time:</strong> ${report.birth_time}</p>
+                    <p><strong>Location:</strong> ${report.location}</p>
+                    <p><strong>Ascendant:</strong> ${report.Ascendant}</p>
+                    <p><strong>Aspects:</strong> ${report.Aspects.length ? report.Aspects.join(', ') : 'None listed'}</p>
+                    <p><strong>Current Vimshottari Dasha:</strong> ${report['Current Vimshottari Dasha']}</p>
+                    <p><strong>House Positions:</strong></p>
+                    <ul>
+                        ${report['House Positions'].map((position, index) => `<li>${index + 1}th House: ${position}</li>`).join('')}
+                    </ul>
+                    <p><strong>Planetary Positions:</strong></p>
+                    <ul>
+                        ${Object.entries(report['Planetary Positions']).map(([planet, position]) => `<li>${planet}: ${position}</li>`).join('')}
+                    </ul>
+                    <p><strong>Yogas:</strong> ${report.Yogas.length ? report.Yogas.join(', ') : 'None listed'}</p>
+                `;
             }
         });
     </script>
