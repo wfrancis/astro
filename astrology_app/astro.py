@@ -97,7 +97,10 @@ def calculate_vimshottari_dasha(julian_day, birth_julian_day):
 
 def generate_astrology_report(first_name, last_name, birth_date, birth_time, location, timezone_str):
     year, month, day = map(int, birth_date.split('-'))
-    hour, minute = map(int, birth_time.split(':'))
+    if birth_time:
+        hour, minute = map(int, birth_time.split(':'))
+    else:
+        hour, minute = 12, 0  # Default to 12 PM if birth time is unknown
 
     latitude, longitude = get_lat_lon(location)
 
