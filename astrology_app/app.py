@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from astro import generate_astrology_report
+from astrology_app.astro import generate_astrology_report
 
 app = Flask(__name__)
 
@@ -18,9 +18,10 @@ def report():
     birth_date = data['birth_date']
     birth_time = data['birth_time']
     location = data['location']
+    timezone = data['timezone']
 
     # Generate the astrology report
-    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location)
+    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location, timezone)
     print(f"Generated report: {report}")
 
     # Return the report as JSON

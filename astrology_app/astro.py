@@ -1,14 +1,39 @@
 import swisseph as swe
 import datetime
-
+import pytz
 from geopy import Photon
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-from geopy.geocoders.geocodefarm import GeocodeFarm
 
 
-def get_julian_day(year, month, day, hour=0, minute=0):
-    return swe.julday(year, month, day, hour + minute / 60.0)
+def get_lat_lon(location):
+    geolocators = [
+        ("Nominatim", Nominatim(user_agent="astro_report")),
+        ("Photon", Photon(user_agent="astro_report"))
+    ]
+
+    for service_name, geolocator in geolocators:
+        try:
+            loc = geolocator.geocode(location, timeout=10)
+            if loc:
+                print(f"Location found using {service_name}: {loc.latitude}, {loc.longitude}")
+                return loc.latitude, loc.longitude
+            else:
+                print(f"Location '{location}' not found using {service_name}")
+        except (GeocoderTimedOut, GeocoderServiceError, ValueError) as e:
+            print(f"{service_name} failed: {e}")
+
+    raise ValueError("All geocoding services failed")
+
+
+def get_julian_day(year, month, day, hour=0, minute=0, tzinfo=None):
+    if tzinfo:
+        naive_datetime = datetime.datetime(year, month, day, hour, minute)
+        aware_datetime = tzinfo.localize(naive_datetime)
+        utc_datetime = aware_datetime.astimezone(pytz.utc)
+        hour = utc_datetime.hour + utc_datetime.minute / 60.0
+        year, month, day = utc_datetime.year, utc_datetime.month, utc_datetime.day
+    return swe.julday(year, month, day, hour)
 
 
 def get_planet_position(julian_day, planet):
@@ -70,44 +95,16 @@ def calculate_vimshottari_dasha(julian_day, birth_julian_day):
     return current_dasha
 
 
-def get_lat_lon(location):
-    geolocators = [
-        ("Nominatim", Nominatim(user_agent="astro_report")),
-        ("Photon", Photon(user_agent="astro_report")),
-        ("GeocodeFarm", GeocodeFarm(user_agent="astro_report"))
-    ]
-
-    for service_name, geolocator in geolocators:
-        try:
-            loc = geolocator.geocode(location, timeout=10)
-            if loc:
-                print(f"Location found using {service_name}: {loc.latitude}, {loc.longitude}")
-                return loc.latitude, loc.longitude
-            else:
-                print(f"Location '{location}' not found using {service_name}")
-        except (GeocoderTimedOut, GeocoderServiceError, ValueError) as e:
-            print(f"{service_name} failed: {e}")
-
-    raise ValueError("All geocoding services failed")
-
-
-# Example usage
-try:
-    lat, lon = get_lat_lon("New York, USA")
-    print(f"Latitude: {lat}, Longitude: {lon}")
-except ValueError as e:
-    print(e)
-
-
-def generate_astrology_report(first_name, last_name, birth_date, birth_time, location):
+def generate_astrology_report(first_name, last_name, birth_date, birth_time, location, timezone_str):
     year, month, day = map(int, birth_date.split('-'))
     hour, minute = map(int, birth_time.split(':'))
 
     latitude, longitude = get_lat_lon(location)
 
-    birth_julian_day = get_julian_day(year, month, day, hour, minute)
-    julian_day = get_julian_day(datetime.datetime.now().year, datetime.datetime.now().month,
-                                datetime.datetime.now().day)
+    tzinfo = pytz.timezone(timezone_str)
+    birth_julian_day = get_julian_day(year, month, day, hour, minute, tzinfo)
+    now = datetime.datetime.now(tzinfo)
+    julian_day = get_julian_day(now.year, now.month, now.day, now.hour, now.minute, tzinfo)
 
     planets = {
         'Sun': swe.SUN,
@@ -129,9 +126,7 @@ def generate_astrology_report(first_name, last_name, birth_date, birth_time, loc
     house_rasis = [get_rasi(house_position) for house_position in house_positions]
 
     aspects = get_aspects(planet_positions)
-
     yogas = identify_yogas(planet_positions, house_positions)
-
     current_dasha = calculate_vimshottari_dasha(julian_day, birth_julian_day)
 
     report = {
@@ -147,6 +142,7 @@ def generate_astrology_report(first_name, last_name, birth_date, birth_time, loc
 
     return report
 
+
 if __name__ == '__main__':
     # Generate the report with provided details
     first_name = "Billy"
@@ -154,8 +150,9 @@ if __name__ == '__main__':
     birth_date = "1982-02-22"
     birth_time = "03:00"
     location = "Voorhees, New Jersey"
+    timezone_str = "America/New_York"
 
-    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location)
+    report = generate_astrology_report(first_name, last_name, birth_date, birth_time, location, timezone_str)
     report_str = "\n".join([f"{key}: {value}" for key, value in report.items()])
 
     print("Generated Astrology Report:")
