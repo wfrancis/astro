@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Astrology Report</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
     <style>
         .info-icon {
             cursor: pointer;
@@ -15,6 +15,11 @@
         .tooltip-inner {
             max-width: 300px;
             text-align: left;
+        }
+        #locationSuggestions {
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
         }
     </style>
 </head>
@@ -32,35 +37,20 @@
             </div>
             <div class="form-group">
                 <label for="birthDate">Birth Date:</label>
-                <input type="date" class="form-control" id="birthDate" required>
+                <input type="text" class="form-control" id="birthDate" placeholder="YYYY-MM-DD" required>
             </div>
             <div class="form-group">
                 <label for="birthTime">Birth Time:</label>
                 <input type="time" class="form-control" id="birthTime">
                 <div class="form-check mt-2">
                     <input type="checkbox" class="form-check-input" id="unknownBirthTime">
-                    <label class="form-check-label" for="unknownBirthTime">Not sure of my birth time</label>
+                    <label class="form-check-label" for="unknownBirthTime">I don't know my birth time</label>
                 </div>
             </div>
             <div class="form-group">
                 <label for="location">Location:</label>
                 <input type="text" class="form-control" id="location" placeholder="City, State" required>
-            </div>
-            <div class="form-group">
-                <label for="timezone">Timezone:</label>
-                <select class="form-control" id="timezone" required>
-                    <!-- List of common timezones -->
-                    <option value="America/New_York">America/New_York</option>
-                    <option value="America/Los_Angeles">America/Los_Angeles</option>
-                    <option value="America/Chicago">America/Chicago</option>
-                    <option value="America/Denver">America/Denver</option>
-                    <option value="Europe/London">Europe/London</option>
-                    <option value="Europe/Paris">Europe/Paris</option>
-                    <option value="Asia/Tokyo">Asia/Tokyo</option>
-                    <option value="Asia/Shanghai">Asia/Shanghai</option>
-                    <option value="Asia/Kolkata">Asia/Kolkata</option>
-                    <option value="Australia/Sydney">Australia/Sydney</option>
-                </select>
+                <ul id="locationSuggestions" class="list-group"></ul>
             </div>
             <button type="submit" class="btn btn-primary">Generate Report</button>
         </form>
@@ -71,49 +61,108 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize Flatpickr for birth date
+            $('#birthDate').flatpickr({
+                dateFormat: "Y-m-d",
+                maxDate: "today"
+            });
 
-<script>
-    $(document).ready(function () {
-        $('#astroForm').on('submit', function (event) {
-            event.preventDefault();
+            // Handle location autocomplete
+            $('#location').on('input', function () {
+                let query = $(this).val();
+                if (query.length < 3) {
+                    $('#locationSuggestions').hide();
+                    return;
+                }
 
-            let firstName = $('#firstName').val();
-            let lastName = $('#lastName').val();
-            let birthDate = $('#birthDate').val();
-            let birthTime = $('#birthTime').val();
-            let location = $('#location').val();
-            let timezone = $('#timezone').val();
+                $.getJSON(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${query}`, function (data) {
+                    let suggestions = data.filter(place => place.address.country_code === 'us').map(place => {
+                        let city = place.address.city || place.address.town || place.address.village || place.address.hamlet || "";
+                        let state = place.address.state || place.address.region || place.address.county || "";
+                        return city && state ? `
+                            <li class="list-group-item list-group-item-action" data-lat="${place.lat}" data-lon="${place.lon}">
+                                ${city}, ${state}
+                            </li>
+                        ` : "";
+                    }).join('');
+                    $('#locationSuggestions').html(suggestions).show();
+                });
+            });
 
-            // Format the data as required
-            let formattedData = {
-                first_name: firstName,
-                last_name: lastName,
-                birth_date: birthDate,
-                birth_time: birthTime,
-                location: location,
-                timezone: timezone
-            };
+            // Handle location suggestion click
+            $('#locationSuggestions').on('click', 'li', function () {
+                $('#location').val($(this).text());
+                $('#location').data('lat', $(this).data('lat'));
+                $('#location').data('lon', $(this).data('lon'));
+                $('#locationSuggestions').hide();
+            });
 
-            $.ajax({
-                type: 'POST',
-                url: '/report',
-                contentType: 'application/json',
-                data: JSON.stringify(formattedData),
-                success: function (data) {
-                    console.log('Data received:', data); // Debugging statement
-                    $('#astroReport').html(formatReport(data));
-                    $('#reportSection').show();
-                    $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
-                },
-                error: function (error) {
-                    console.log('Error:', error);
+            // Hide suggestions on click outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#location, #locationSuggestions').length) {
+                    $('#locationSuggestions').hide();
                 }
             });
-        });
 
-        function formatReport(report) {
-            console.log('Formatting report:', report); // Debugging statement
+            // Handle form submission
+            $('#astroForm').on('submit', function (event) {
+                event.preventDefault();
+
+                let firstName = $('#firstName').val();
+                let lastName = $('#lastName').val();
+                let birthDate = $('#birthDate').val();
+                let birthTime = $('#birthTime').val();
+                let location = $('#location').val();
+
+                if ($('#unknownBirthTime').is(':checked')) {
+                    birthTime = "12:00"; // Default to 12 PM if birth time is unknown
+                }
+
+                let lat = $('#location').data('lat');
+                let lon = $('#location').data('lon');
+
+                if (!lat || !lon) {
+                    alert('Please select a location from the suggestions.');
+                    return;
+                }
+
+                // Get timezone using latitude and longitude
+                $.getJSON(`http://worldtimeapi.org/api/timezone/Etc/GMT`, function (timezoneData) {
+                    var timezone = timezoneData.timezone;
+
+                    // Format the data as required
+                    let formattedData = {
+                        first_name: firstName,
+                        last_name: lastName,
+                        birth_date: birthDate,
+                        birth_time: birthTime,
+                        location: location,
+                        timezone: timezone
+                    };
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/report',
+                        contentType: 'application/json',
+                        data: JSON.stringify(formattedData),
+                        success: function (data) {
+                            console.log('Data received:', data); // Debugging statement
+                            $('#astroReport').html(formatReport(data));
+                            $('#reportSection').show();
+                            $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
+                        },
+                        error: function (error) {
+                            console.log('Error:', error);
+                        }
+                    });
+                });
+            });
+
+            function formatReport(report) {
+                console.log('Formatting report:', report); // Debugging statement
 
             function getOrdinalSuffix(n) {
                 const s = ["th", "st", "nd", "rd"],
@@ -192,8 +241,8 @@
             }
 
             return reportHtml;
-        }
-    });
-</script>
+            }
+        });
+    </script>
 </body>
 </html>
