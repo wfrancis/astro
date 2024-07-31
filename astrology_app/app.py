@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from astrology_app.astro import generate_astrology_report
+from astro import generate_astrology_report
 
 app = Flask(__name__)
 
