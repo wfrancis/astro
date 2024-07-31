@@ -9,8 +9,37 @@ $(document).ready(function () {
         maxDate: "today"
     });
 
+    // Initialize tooltip for the button
+    $('#generateReportButton').tooltip();
+
     // Disable the button initially
     $('#generateReportButton').prop('disabled', true);
+
+    // Function to check if all required fields are filled
+    function checkRequiredFields() {
+        let allFilled = true;
+        $('#astroForm input[required]').each(function() {
+            if ($(this).val() === '') {
+                allFilled = false;
+            }
+        });
+
+        let lat = $('#location').data('lat');
+        let lon = $('#location').data('lon');
+
+        if (!lat || !lon) {
+            allFilled = false;
+        }
+
+        if (allFilled) {
+            $('#generateReportButton').prop('disabled', false).tooltip('dispose'); // Enable button and remove tooltip
+        } else {
+            $('#generateReportButton').prop('disabled', true).tooltip(); // Disable button and reinitialize tooltip
+        }
+    }
+
+    // Check required fields on input change
+    $('#astroForm input').on('input', checkRequiredFields);
 
     // Handle location autocomplete
     $('#location').on('input', function () {
@@ -18,7 +47,7 @@ $(document).ready(function () {
         let query = $(this).val();
         if (query.length < 3) {
             $('#locationSuggestions').hide();
-            $('#generateReportButton').prop('disabled', true); // Disable button
+            checkRequiredFields(); // Check required fields when location input is less than 3 characters
             return;
         }
 
@@ -42,7 +71,7 @@ $(document).ready(function () {
         $('#location').data('lat', $(this).data('lat'));
         $('#location').data('lon', $(this).data('lon'));
         $('#locationSuggestions').hide();
-        $('#generateReportButton').prop('disabled', false); // Enable button
+        checkRequiredFields(); // Check required fields when a location suggestion is selected
     });
 
     // Hide suggestions on click outside
@@ -101,13 +130,14 @@ $(document).ready(function () {
                     $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
 
                     // Scroll to the report section
+                    console.log('Scrolling to report section');
                     document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' });
 
                     // Clear the form fields
                     $('#astroForm')[0].reset();
 
-                    // Disable the "Generate Report" button
-                    $('#generateReportButton').prop('disabled', true);
+                    // Disable the "Generate Report" button and reinitialize tooltip
+                    $('#generateReportButton').prop('disabled', true).tooltip();
 
                     // Clear the location data attributes
                     $('#location').removeData('lat').removeData('lon');
