@@ -3,6 +3,18 @@ console.log('astro.js loaded');
 $(document).ready(function () {
     console.log('Document ready');
 
+    // Track visitor as soon as the page loads
+    $.ajax({
+        type: 'POST',
+        url: '/track_visitor',
+        success: function (trackResponse) {
+            console.log('Visitor tracked successfully:', trackResponse);
+        },
+        error: function (error) {
+            console.log('Error tracking visitor:', error);
+        }
+    });
+
     // Initialize Flatpickr for birth date
     $('#birthDate').flatpickr({
         dateFormat: "Y-m-d",
@@ -10,10 +22,10 @@ $(document).ready(function () {
     });
 
     // Initialize tooltip for the button
-    $('#generateReportButton').tooltip();
+    $('#generateMatchButton').tooltip();
 
     // Disable the button initially
-    $('#generateReportButton').prop('disabled', true);
+    $('#generateMatchButton').prop('disabled', true);
 
     // Function to check if all required fields are filled
     function checkRequiredFields() {
@@ -32,9 +44,9 @@ $(document).ready(function () {
         }
 
         if (allFilled) {
-            $('#generateReportButton').prop('disabled', false).tooltip('dispose'); // Enable button and remove tooltip
+            $('#generateMatchButton').prop('disabled', false).tooltip('dispose'); // Enable button and remove tooltip
         } else {
-            $('#generateReportButton').prop('disabled', true).tooltip(); // Disable button and reinitialize tooltip
+            $('#generateMatchButton').prop('disabled', true).tooltip(); // Disable button and reinitialize tooltip
         }
     }
 
@@ -81,7 +93,7 @@ $(document).ready(function () {
         }
     });
 
-    // Handle form submission
+    // Handle form submission for generating match
     $('#astroForm').on('submit', function (event) {
         event.preventDefault();
         console.log('Form submitted');
@@ -108,8 +120,8 @@ $(document).ready(function () {
         $.getJSON(`https://worldtimeapi.org/api/timezone/Etc/GMT`, function (timezoneData) {
             var timezone = timezoneData.timezone;
 
-            // Format the data as required
-            let formattedData = {
+            // Format the data to save the user
+            let userData = {
                 first_name: firstName,
                 last_name: lastName,
                 birth_date: birthDate,
@@ -118,32 +130,47 @@ $(document).ready(function () {
                 timezone: timezone
             };
 
+            // Save user data
             $.ajax({
                 type: 'POST',
-                url: '/report',
+                url: '/save_user',
                 contentType: 'application/json',
-                data: JSON.stringify(formattedData),
-                success: function (data) {
-                    console.log('Data received:', data); // Debugging statement
-                    $('#astroReport').html(formatReport(data));
-                    $('#reportSection').show();
-                    $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
+                data: JSON.stringify(userData),
+                success: function (response) {
+                    console.log('Save user response:', response);
 
-                    // Scroll to the report section
-                    console.log('Scrolling to report section');
-                    document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' });
+                    // After saving user, request the astrology report
+                    $.ajax({
+                        type: 'POST',
+                        url: '/report',
+                        contentType: 'application/json',
+                        data: JSON.stringify(userData),
+                        success: function (data) {
+                            console.log('Data received:', data); // Debugging statement
+                            $('#astroReport').html(formatReport(data));
+                            $('#reportSection').show();
+                            $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
 
-                    // Clear the form fields
-                    $('#astroForm')[0].reset();
+                            // Scroll to the report section
+                            console.log('Scrolling to report section');
+                            document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' });
 
-                    // Disable the "Generate Report" button and reinitialize tooltip
-                    $('#generateReportButton').prop('disabled', true).tooltip();
+                            // Clear the form fields
+                            $('#astroForm')[0].reset();
 
-                    // Clear the location data attributes
-                    $('#location').removeData('lat').removeData('lon');
+                            // Disable the "Generate Report" button and reinitialize tooltip
+                            $('#generateMatchButton').prop('disabled', true).tooltip();
+
+                            // Clear the location data attributes
+                            $('#location').removeData('lat').removeData('lon');
+                        },
+                        error: function (error) {
+                            console.log('Error:', error);
+                        }
+                    });
                 },
                 error: function (error) {
-                    console.log('Error:', error);
+                    console.log('Error saving user:', error);
                 }
             });
         });
@@ -206,7 +233,7 @@ $(document).ready(function () {
         return descriptions[dasha] || '';
     }
 
-    let reportHtml = `<h2>Astrological Report for ${report['First Name']} ${report['Last Name']}</h2>`;
+    let reportHtml = `<h2>Astrological Match for ${report['First Name']} ${report['Last Name']}</h2>`;
 
     reportHtml += `<p><strong>Ascendant:</strong> ${report.Ascendant} <span class="info-icon" data-toggle="tooltip" title="The Ascendant is the sign rising on the eastern horizon at the time of birth. It represents your outward personality and how others perceive you. ${getSignDescription(report.Ascendant)}">&#9432;</span></p>`;
 

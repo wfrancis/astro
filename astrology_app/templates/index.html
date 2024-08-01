@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="mt-5">Astrological Report</h1>
+        <h1 class="mt-5">Astrological Match</h1>
         <form id="astroForm">
             <div class="form-group">
                 <label for="firstName">First Name:</label>
@@ -52,10 +52,10 @@
                 <input type="text" class="form-control" id="location" placeholder="City, State" required>
                 <ul id="locationSuggestions" class="list-group"></ul>
             </div>
-            <button type="submit" class="btn btn-primary" id="generateReportButton" disabled data-toggle="tooltip" title="Fill out all fields">Generate Report</button>
+            <button type="submit" class="btn btn-primary" id="generateMatchButton" disabled data-toggle="tooltip" title="Fill out all fields">Generate Match</button>
         </form>
 
-        <!-- Report Section -->
+        <!-- Match Section -->
         <div id="reportSection" class="mt-5" style="display: none;">
             <div id="astroReport"></div>
         </div>
