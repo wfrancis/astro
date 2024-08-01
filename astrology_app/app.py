@@ -11,7 +11,7 @@ dynamodb = boto3.resource(
     'dynamodb',
     region_name='us-east-2',
     aws_access_key_id='AKIAQ3EGTEIZLWIGNUGA',
-    aws_secret_access_key='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'
+    aws_secret_access_key=''
 )
 
 users_table = dynamodb.Table('Users')
