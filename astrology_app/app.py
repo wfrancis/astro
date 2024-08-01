@@ -86,15 +86,22 @@ def save_user():
 # Endpoint to track visitors
 @app.route('/track_visitor', methods=['POST'])
 def track_visitor():
-    ip_address = request.remote_addr
+    # Try to get the IP address from the X-Forwarded-For header
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+    # If the header contains multiple IP addresses, take the first one
+    if ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
+    # Update the visitor count for the IP address
     visitors_table.update_item(
         Key={'ip_address': ip_address},
         UpdateExpression="ADD visit_count :inc",
         ExpressionAttributeValues={':inc': 1},
         ReturnValues="UPDATED_NEW"
     )
-    return jsonify({'message': 'Visitor tracked successfully!'})
 
+    return jsonify({'message': 'Visitor tracked successfully!'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8000)
