@@ -10,7 +10,7 @@ app = Flask(__name__)
 dynamodb = boto3.resource(
     'dynamodb',
     region_name='us-east-2',
-    aws_access_key_id='AKIAQ3EGTEIZLWIGNUGA',
+    aws_access_key_id='',
     aws_secret_access_key=''
 )
 
